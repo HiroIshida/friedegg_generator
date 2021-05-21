@@ -1,0 +1,32 @@
+<launch>
+  <rosparam param="/use_sim_time">true</rosparam>
+  <arg name="length0" default="1.0" />
+  <arg name="model" default="$(find pr2_description)/robots/pr2.urdf.xacro"/>
+  <param name="robot_description" command="$(find xacro)/xacro $(arg model)  length:=$(arg length0) --inorder" />
+
+  <node pkg="rosbag" type="play" name="player" output="screen"
+      args="-l --clock $(find friedegg_generator)/bags/edge_detect.bag"/>
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find friedegg_generator)/config/basic.rviz"/>
+
+  <include file="$(find jsk_pcl_ros)/launch/hsi_color_filter.launch">
+      <arg name="INPUT" value="/kinect_head/depth_registered/half/points"/>
+      <arg name="h_max" value="-40" />
+      <arg name="h_min" value="-128" />
+      <arg name="s_max" value="165" />
+      <arg name="s_min" value="101" />
+      <arg name="i_max" value="255" />
+      <arg name="i_min" value="137" />
+  </include>
+
+  <node name="organized_edge_detector"
+        pkg="nodelet" type="nodelet"
+        args="standalone jsk_pcl/OrganizedEdgeDetector">
+    <remap from="~input" to="/HSI_color_filter/hsi_output"/>
+    <rosparam>
+      publish_normal: true
+      use_nan_boundary: true
+      use_rgb: true
+    </rosparam>
+  </node>
+
+</launch>
