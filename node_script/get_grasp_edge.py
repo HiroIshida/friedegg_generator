@@ -47,8 +47,8 @@ class GraspPointDetector(object):
         logicals = np.array([predicate(pt) for pt in pts_array])
         upper_edge_points = pts_array[logicals]
 
-        idx_x_min = np.argmin(upper_edge_points[:, 0])
-        grasp_point = upper_edge_points[idx_x_min]
+        idx_y_min = np.argmin(upper_edge_points[:, 1])
+        grasp_point = upper_edge_points[idx_y_min]
         self._grasp_point = grasp_point
 
         self._pts_array = pts_array[logicals]
