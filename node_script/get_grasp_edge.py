@@ -40,15 +40,26 @@ class GraspPoseDetector(object):
         if len(boxes.boxes) != 1:
             return
         box = boxes.boxes[0]
-        z_center = box.pose.position.z
-        z_width = box.dimensions.z
-        z_lo = z_center - z_width * 0.5
-        z_hi = z_center + z_width * 0.5
-
-        dish_center = np.array([box.pose.position.x, box.pose.position.y, z_lo])
+        x_center, y_center, z_center = box.pose.position.x, box.pose.position.y, box.pose.position.z
+        x_width, y_width, z_width = box.dimensions.x, box.dimensions.y, box.dimensions.z
+        b_min = np.array([x_center - x_width * 0.5, y_center - y_width * 0.5, z_center - z_width * 0.5])
+        b_max = np.array([x_center + x_width * 0.5, y_center + y_width * 0.5, z_center + z_width * 0.5])
+        dish_center = np.array([box.pose.position.x, box.pose.position.y, b_min[2]])
 
         pts_array = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(pcloud_edge)
-        predicate = lambda pt : pt[2] > z_hi - z_width * 0.3
+        def predicate(pt):
+            b_width = b_max - b_min
+            b_min_margined = b_min - b_width * 0.1
+            b_max_margined = b_max + b_width * 0.1
+            for i in range(2):
+                if pt[i] < b_min_margined[i]:
+                    return False
+                if pt[i] > b_max_margined[i]:
+                    return False
+            if pt[2] < b_max[2] - z_width * 0.3:
+                return False
+            return True
+
         logicals = np.array([predicate(pt) for pt in pts_array])
         upper_edge_points = pts_array[logicals]
 
