@@ -66,7 +66,7 @@ class GraspPoseDetector(object):
         pos = msg.pose.position
         pos.x, pos.y, pos.z = self._grasp_pose
 
-        r = R.from_euler('yz', [45, 90], degrees=True)
+        r = R.from_euler('xyz', [90, 45, 90], degrees=True)
         rot = msg.pose.orientation
         rot.x, rot.y, rot.z, rot.w = r.as_quat()
         self.pub.publish(msg)
