@@ -7,7 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /PointCloud23
-        - /PointStamped1
+        - /Pose1
       Splitter Ratio: 0.5
     Tree Height: 728
   - Class: rviz/Selection
@@ -575,13 +575,18 @@ Visualization Manager:
       only edge: false
       show coords: false
     - Alpha: 1
-      Class: rviz/PointStamped
-      Color: 239; 41; 41
+      Axes Length: 0.10000000149011612
+      Axes Radius: 0.019999999552965164
+      Class: rviz/Pose
+      Color: 255; 25; 0
       Enabled: true
-      History Length: 1
-      Name: PointStamped
-      Radius: 0.029999999329447746
-      Topic: /grasp_point
+      Head Length: 0.019999999552965164
+      Head Radius: 0.03999999910593033
+      Name: Pose
+      Shaft Length: 0.05000000074505806
+      Shaft Radius: 0.019999999552965164
+      Shape: Axes
+      Topic: /grasp_pose
       Unreliable: false
       Value: true
   Enabled: true
@@ -612,7 +617,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.133470058441162
+      Distance: 1.6961888074874878
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -627,10 +632,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5253982543945312
+      Pitch: 0.764796793460846
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.03039722889661789
+      Yaw: 0.010396354831755161
     Saved: ~
 Window Geometry:
   Displays:

@@ -5,11 +5,11 @@ import ros_numpy
 import numpy as np
 import message_filters
 from sensor_msgs.msg import PointCloud2, PointField
-from geometry_msgs.msg import PointStamped
+from geometry_msgs.msg import PoseStamped
 from jsk_recognition_msgs.msg import BoundingBoxArray
 import sensor_msgs.point_cloud2 as pc2
 
-class GraspPointDetector(object):
+class GraspPoseDetector(object):
     frame_id = "base_link"
 
     def __init__(self):
@@ -20,18 +20,18 @@ class GraspPointDetector(object):
         ts = message_filters.ApproximateTimeSynchronizer([sub1, sub2], 200, 0.2)
         ts.registerCallback(self.callback)
 
-        self.pub = rospy.Publisher("grasp_point", PointStamped, queue_size=1)
+        self.pub = rospy.Publisher("grasp_pose", PoseStamped, queue_size=1)
 
         # varibales 
         self._header = None
-        self._grasp_point = None
+        self._grasp_pose = None
 
         # variables for dbeugging
         self._pts_array = None
 
     def callback(self, pcloud_edge, boxes):
-        assert pcloud_edge.header.frame_id == GraspPointDetector.frame_id
-        assert boxes.header.frame_id == GraspPointDetector.frame_id
+        assert pcloud_edge.header.frame_id == GraspPoseDetector.frame_id
+        assert boxes.header.frame_id == GraspPoseDetector.frame_id
         self._header = pcloud_edge.header
 
         if len(boxes.boxes) != 1:
@@ -48,18 +48,18 @@ class GraspPointDetector(object):
         upper_edge_points = pts_array[logicals]
 
         idx_y_min = np.argmin(upper_edge_points[:, 1])
-        grasp_point = upper_edge_points[idx_y_min]
-        self._grasp_point = grasp_point
+        grasp_pose = upper_edge_points[idx_y_min]
+        self._grasp_pose = grasp_pose
 
         self._pts_array = pts_array[logicals]
-        self._publish_grasp_point()
+        self._publish_grasp_pose()
 
-    def _publish_grasp_point(self):
-        msg = PointStamped()
+    def _publish_grasp_pose(self):
+        msg = PoseStamped()
         msg.header = self._header
-        msg.point.x, msg.point.y, msg.point.z = self._grasp_point
+        pos = msg.pose.position
+        pos.x, pos.y, pos.z = self._grasp_pose
         self.pub.publish(msg)
-
 
     def debug_show_points(self):
         import matplotlib.pyplot as plt
@@ -73,7 +73,7 @@ class GraspPointDetector(object):
 
 
 if __name__=="__main__":
-    rospy.init_node("grasp_point_detector")
+    rospy.init_node("grasp_pose_detector")
     rate = rospy.Rate(10)
-    gpd = GraspPointDetector()
+    gpd = GraspPoseDetector()
     rospy.spin()
