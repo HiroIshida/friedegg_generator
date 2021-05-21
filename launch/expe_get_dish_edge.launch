@@ -38,5 +38,6 @@
       use_rgb: true
     </rosparam>
   </node>
+  <node name="grasp_pose_detector" pkg="friedegg_generator" type="get_grasp_edge.py"/>
 
 </launch>
