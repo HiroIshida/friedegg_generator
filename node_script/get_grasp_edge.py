@@ -13,7 +13,7 @@ from jsk_recognition_msgs.msg import BoundingBoxArray
 import sensor_msgs.point_cloud2 as pc2
 
 class GraspPoseDetector(object):
-    frame_id = "base_link"
+    frame_id = "base_footprint"
 
     def __init__(self):
         pcloud_edge_name = "/organized_edge_detector/output"

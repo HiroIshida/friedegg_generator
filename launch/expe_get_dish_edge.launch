@@ -8,7 +8,7 @@
             args="standalone jsk_pcl_utils/TfTransformCloud">
             <remap from="~input" to="/kinect_head/depth_registered/half/points"/>
         <rosparam>
-          target_frame_id: base_link
+          target_frame_id: base_footprint
         </rosparam>
     </node>
 
