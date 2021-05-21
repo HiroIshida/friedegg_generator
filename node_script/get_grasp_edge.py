@@ -1,5 +1,7 @@
 import time
 
+from scipy.spatial.transform import Rotation as R
+
 import rospy
 import ros_numpy
 import numpy as np
@@ -42,14 +44,17 @@ class GraspPoseDetector(object):
         z_lo = z_center - z_width * 0.5
         z_hi = z_center + z_width * 0.5
 
+        dish_center = np.array([box.pose.position.x, box.pose.position.y, z_lo])
+
         pts_array = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(pcloud_edge)
         predicate = lambda pt : pt[2] > z_hi - z_width * 0.3
         logicals = np.array([predicate(pt) for pt in pts_array])
         upper_edge_points = pts_array[logicals]
 
         idx_y_min = np.argmin(upper_edge_points[:, 1])
+
         grasp_pose = upper_edge_points[idx_y_min]
-        self._grasp_pose = grasp_pose
+        self._grasp_pose = grasp_pose # TODO actually it's a position
 
         self._pts_array = pts_array[logicals]
         self._publish_grasp_pose()
@@ -59,6 +64,10 @@ class GraspPoseDetector(object):
         msg.header = self._header
         pos = msg.pose.position
         pos.x, pos.y, pos.z = self._grasp_pose
+
+        r = R.from_euler('yz', [45, 90], degrees=True)
+        rot = msg.pose.orientation
+        rot.x, rot.y, rot.z, rot.w = r.as_quat()
         self.pub.publish(msg)
 
     def debug_show_points(self):
