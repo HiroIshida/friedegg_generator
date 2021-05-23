@@ -1,4 +1,9 @@
 <launch>
+  <arg name="rosbag" default="false" />
+  <include file="$(find friedegg_generator)/launch/load_rosbag.launch" if="$(arg rosbag)">
+      <arg name="bagname" value="pan_detect_easy.bag"/>
+  </include>
+
   <include file="$(find friedegg_generator)/launch/expe_get_dish_edge.launch">
     <arg name="rviz" value="false"/>
     <arg name="adhoc_tf_enable" default="false" />
@@ -7,5 +12,7 @@
   <include file="$(find friedegg_generator)/launch/expe_pan_detect.launch">
     <arg name="rviz" value="false"/>
   </include>
+
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find friedegg_generator)/config/demo.rviz"/>
 
 </launch>
