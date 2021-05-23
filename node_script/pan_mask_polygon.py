@@ -36,22 +36,6 @@ def callback(msg_class, msg_rectarr, msg_image):
     poly_msg = convert_rect_to_polygon(rect, msg_image.header)
     pub.publish(poly_msg)
 
-    """
-    label_names = msg_class.label_names
-    bridge = cv_bridge.CvBridge()
-    img = bridge.imgmsg_to_cv2(msg_image, desired_encoding='bgr8')
-
-    mask = np.zeros(img.shape[:2], np.uint8)
-    mask[rect.y:rect.y + rect.height, rect.x:rect.x + rect.width] = 255
-
-    mask_msg = bridge.cv2_to_imgmsg(mask, encoding='mono8')
-    mask_msg.header = msg_image.header
-    pub.publish(mask_msg)
-
-    tmp["img"] = img
-    tmp["mask"] = mask
-    """
-
 msg_class_name = "/edgetpu_object_detector/output/class"
 msg_rectarr_name = "/edgetpu_object_detector/output/rects"
 msg_image_name ="/kinect_head/rgb/image_rect_color"
