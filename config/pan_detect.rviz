@@ -1,14 +1,16 @@
 Panels:
   - Class: rviz/Displays
-    Help Height: 245
+    Help Height: 0
     Name: Displays
     Property Tree Widget:
       Expanded:
         - /Global Options1
         - /Status1
+        - /PointCloud21
         - /Image1
+        - /Polygon1
       Splitter Ratio: 0.5
-    Tree Height: 180
+    Tree Height: 425
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -496,7 +498,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.009999999776482582
       Style: Points
-      Topic: /kinect_head/depth_registered/half/points
+      Topic: /tf_transform_cloud/output
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -511,6 +513,14 @@ Visualization Manager:
       Normalize Range: true
       Queue Size: 2
       Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Class: rviz/Polygon
+      Color: 25; 255; 0
+      Enabled: true
+      Name: Polygon
+      Topic: /pan_surface
       Unreliable: false
       Value: true
   Enabled: true
@@ -541,7 +551,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.2495341300964355
+      Distance: 5.051814079284668
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -556,10 +566,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5897969603538513
+      Pitch: 0.7797967195510864
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.3085765838623047
+      Yaw: 0.7885746955871582
     Saved: ~
 Window Geometry:
   Displays:

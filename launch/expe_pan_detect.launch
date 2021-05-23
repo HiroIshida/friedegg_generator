@@ -6,15 +6,6 @@
   </include>
   <node type="rviz" name="rviz" pkg="rviz" args="-d $(find friedegg_generator)/config/pan_detect.rviz"/>
 
-  <node name="tf_transform_cloud"
-          pkg="nodelet" type="nodelet"
-          args="standalone jsk_pcl_utils/TfTransformCloud">
-          <remap from="~input" to="/kinect_head/depth_registered/points"/>
-      <rosparam>
-        target_frame_id: base_footprint
-      </rosparam>
-  </node>
-
   <node name="rects_to_cpi_ssd"
         pkg="jsk_recognition_utils" type="rect_array_to_cluster_point_indices.py"
         output="screen" >
@@ -44,6 +35,17 @@
     </rosparam>
   </node>
 
+  <node name="tf_transform_cloud"
+          pkg="nodelet" type="nodelet"
+          args="standalone jsk_pcl_utils/TfTransformCloud">
+          <remap from="~input" to="/extract_indices/output"/>
+      <rosparam>
+        target_frame_id: base_footprint
+      </rosparam>
+  </node>
+
+
   <node name="pan_mask_polygon_pub" pkg="friedegg_generator" type="pan_mask_polygon.py"/>
+  <node name="pan_surface_pub" pkg="friedegg_generator" type="pan_surface.py"/>
 
 </launch>
