@@ -1,0 +1,11 @@
+<launch>
+  <include file="$(find friedegg_generator)/launch/expe_get_dish_edge.launch">
+    <arg name="rviz" value="false"/>
+    <arg name="adhoc_tf_enable" default="false" />
+  </include>
+
+  <include file="$(find friedegg_generator)/launch/expe_pan_detect.launch">
+    <arg name="rviz" value="false"/>
+  </include>
+
+</launch>
