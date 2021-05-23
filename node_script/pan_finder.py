@@ -7,7 +7,7 @@ import cv2
 
 import rospy
 import cv_bridge
-from geometry_msgs.msg import PolygonStamped, Point32
+from geometry_msgs.msg import PolygonStamped, Point32, PointStamped
 from sensor_msgs.msg import PointCloud2
 from jsk_recognition_msgs.msg import ClassificationResult
 from jsk_recognition_msgs.msg import RectArray
@@ -19,6 +19,7 @@ tmp = {"msg1": None, "msg2": None}
 
 rospy.init_node("create_pan_surface_polygon")
 pub = rospy.Publisher("pan_surface_polygon", PolygonStamped, queue_size=1)
+pub_center = rospy.Publisher("pan_surface_center", PointStamped, queue_size=1)
 
 def convert_rect_to_polygon(rect, header):
     poly_msg = PolygonStamped()
@@ -73,15 +74,19 @@ def compute_pan_surface_polygon(pts):
     verts = np.hstack([verts_, np.ones((len(verts_), 1))*z_filtered_mean])
     return verts
 
-def polygon_size(verts):
+def polygon_size_and_com(verts):
     s = 0.0
     n = len(verts)
     origin = verts[0]
+    com = np.zeros(3)
     for i in range(n):
         v0 = verts[i] - origin
         v1 = verts[(i+1)%n] - origin
-        s += np.linalg.norm(np.outer(v0, v1)) * 0.5 # green's theorem
-    return s
+        s_triangle = np.linalg.norm(np.outer(v0, v1)) * 0.5
+        com += s_triangle * (v0 + v1)/3.0
+        s += s_triangle # green's theorem
+    com = com/s + origin
+    return s, com
 
 def callback(msg_boxes, msg_class, msg_cloud):
     if len(msg_boxes.boxes) != len(msg_class.label_names):
@@ -97,16 +102,22 @@ def callback(msg_boxes, msg_class, msg_cloud):
 
     msg_polygon = PolygonStamped(header=msg_cloud.header)
     verts = compute_pan_surface_polygon(pts_filtered)
-    size = polygon_size(verts)
+    size, com = polygon_size_and_com(verts) # TODO check size is starnage!
     rospy.loginfo("computed pan size is {0}".format(size))
-    if size < 0.2 * 0.2:
-        return  # probably it's too small for a pan
-    if size > 0.4 * 0.4:
-        return  # probably it's too big for a pan
+    rospy.loginfo("computed pan com is {0}".format(com.tolist()))
+    if size < 0.2 * 0.2: 
+        rospy.loginfo("publish canceled as it's too small")
+        return  
     for v in verts:
         pt = Point32(x=v[0], y=v[1], z=v[2])
         msg_polygon.polygon.points.append(pt)
     pub.publish(msg_polygon)
+
+    msg_point = PointStamped(header=msg_cloud.header)
+    msg_point.point.x = com[0]
+    msg_point.point.y = com[1]
+    msg_point.point.z = com[2]
+    pub_center.publish(msg_point)
 
 msg_boxes_name = "/segmentation_decomposer_ssd/boxes"
 msg_cloud_name = "/tf_transform_cloud/output"
@@ -122,3 +133,4 @@ subs = [message_filters.Subscriber(name, T) for name, T in zip(msg_names, type_n
 ts = message_filters.ApproximateTimeSynchronizer(subs, 200, 0.2)
 ts.registerCallback(callback)
 rospy.spin()
+
