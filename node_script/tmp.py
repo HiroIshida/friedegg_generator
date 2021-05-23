@@ -31,14 +31,20 @@ def convert_rect_to_polygon(rect, header):
     return poly_msg
 
 def filter_by_label(msg_boxes, msg_class):
-    boxes = []
-    for a, b in zip(msg_boxes.boxes, msg_class.label_names):
-        if b == "dish":
-            boxes.append(msg_boxes)
-    return boxes
+    logicals = [label_name=="dish" for label_name in msg_class.label_names]
+    indexes = np.where(logicals)[0].tolist()
+    return [msg_boxes.boxes[i] for i in indexes]
 
-def callback(msg_boxes, msg_class):
+def filter_by_size(boxes, threshold=0.004):
+    # threshold = 0.2 * 0.2 * 0.1 by default
+    get_size = lambda box: box.dimensions.x * box.dimensions.y * box.dimensions.z
+    sizes = [get_size(box) for box in boxes]
+    indexes = np.where(sizes > threshold)[0].tolist()
+    return [boxes[i] for i in indexes]
+
+def callback(msg_boxes, msg_class, msg_cloud):
     boxes_filtered = filter_by_label(msg_boxes, msg_class)
+    boxes_filtered = filter_by_size(boxes_filtered)
 
 msg_boxes_name = "/segmentation_decomposer_ssd/boxes"
 msg_cloud_name = "/tf_transform_cloud/output"
@@ -48,9 +54,9 @@ msg_boxes_type = BoundingBoxArray
 msg_cloud_type = PointCloud2
 msg_class_type = ClassificationResult
 
-msg_names = [msg_boxes_name, msg_class_name]
-type_names = [msg_boxes_type, msg_class_type]
+msg_names = [msg_boxes_name, msg_class_name, msg_cloud_name]
+type_names = [msg_boxes_type, msg_class_type, msg_cloud_type]
 subs = [message_filters.Subscriber(name, T) for name, T in zip(msg_names, type_names)]
 ts = message_filters.ApproximateTimeSynchronizer(subs, 200, 0.2)
 ts.registerCallback(callback)
-#rospy.spin()
+rospy.spin()
