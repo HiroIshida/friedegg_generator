@@ -84,6 +84,11 @@ def polygon_size(verts):
     return s
 
 def callback(msg_boxes, msg_class, msg_cloud):
+    if len(msg_boxes.boxes) != len(msg_class.label_names):
+        # NOTE workaround
+        # TODO maybe this occurs due to sync error??
+        return
+
     boxes_filtered = fileter_box_by_label(msg_boxes, msg_class)
     box = find_bigest_box(boxes_filtered)
 
@@ -93,8 +98,11 @@ def callback(msg_boxes, msg_class, msg_cloud):
     msg_polygon = PolygonStamped(header=msg_cloud.header)
     verts = compute_pan_surface_polygon(pts_filtered)
     size = polygon_size(verts)
+    rospy.loginfo("computed pan size is {0}".format(size))
     if size < 0.2 * 0.2:
         return  # probably it's too small for a pan
+    if size > 0.4 * 0.4:
+        return  # probably it's too big for a pan
     for v in verts:
         pt = Point32(x=v[0], y=v[1], z=v[2])
         msg_polygon.polygon.points.append(pt)

@@ -38,60 +38,20 @@
  <node name="segmentation_decomposer_ssd" pkg="nodelet" type="nodelet"
         args="standalone jsk_pcl/ClusterPointIndicesDecomposer"
         output="screen">
-        <remap from="~input" to="/kinect_head/depth_registered/points" />
+        <remap from="~input" to="/tf_transform_cloud/output"/>
         <remap from="~target" to="/rects_to_cpi_ssd/output_throttle" />
-    <rosparam subst_value="true">
+    <rosparam>
+      align_boxes: true
+      align_boxes_with_plane: false
       approximate_sync: true  
       target_frame_id: base_footprint
       queue_size: 100000
       publish_clouds: false
       sort_by: -cloud_size 
-      use_pca: true
+      use_pca: false
     </rosparam>
   </node>
 
-  <!--
-  <node name="image_cpi_decomposer"
-        pkg="jsk_perception" type="image_cluster_indices_decomposer.py"
-        output="screen">
-    <remap from="~input" to="/kinect_head/rgb/image_rect_color"/>
-    <remap from="~input/cluster_indices" to="/rects_to_cpi_ssd/output" />
-  </node>-->
-
-  <!--
-  <node name="segmentation_decomposer" pkg="nodelet" type="nodelet"
-        args="standalone jsk_pcl/ClusterPointIndicesDecomposer"
-        output="screen">
-    <remap from="~input" to="/plane_extraction/output" />
-    <remap from="~target" to="/rects_to_cpi/output" />
-    <rosparam subst_value="true">
-      approximate_sync: true
-      queue_size: 1000
-      align_boxes: false
-      align_boxes_with_plane: false
-      use_pca: true
-    </rosparam>
-  </node>-->
-
-  <!--
-  <node name="cluster_point_indices_to_point_indices"
-        pkg="nodelet" type="nodelet"
-        args="standalone jsk_pcl_utils/ClusterPointIndicesToPointIndices">
-    <remap from="~input" to="/rects_to_cpi_ssd/output"/>
-    <rosparam>
-      index: 0
-    </rosparam>
-  </node>
-
-  <node name="extract_indices" pkg="jsk_pcl_ros" type="extract_indices">
-    <remap from="~input" to="/kinect_head/depth_registered/points" />
-    <remap from="~indices" to="/cluster_point_indices_to_point_indices/output"/>
-    <rosparam>
-      approximate_sync: true
-    </rosparam>
-  </node>-->
-
-  <node name="pan_mask_polygon_pub" pkg="friedegg_generator" type="pan_mask_polygon.py"/>
-  <node name="pan_surface_pub" pkg="friedegg_generator" type="pan_surface.py"/>
+  <!--node name="pan_finder" pkg="friedegg_generator" type="pan_finder.py"/-->
 
 </launch>
