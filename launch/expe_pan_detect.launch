@@ -1,11 +1,12 @@
 <launch>
   <arg name="rosbag" default="false" />
+  <arg name="rviz" default="true" />
   <arg name="RGB_CAMERA_INFO" value="/kinect_head/rgb/camera_info" />
 
   <include file="$(find friedegg_generator)/launch/load_rosbag.launch" if="$(arg rosbag)">
       <arg name="bagname" value="pan_detect.bag"/>
   </include>
-  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find friedegg_generator)/config/pan_detect.rviz"/>
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find friedegg_generator)/config/pan_detect.rviz" if="$(arg rviz)"/>
 
   <node name="tf_transform_cloud"
           pkg="nodelet" type="nodelet"
