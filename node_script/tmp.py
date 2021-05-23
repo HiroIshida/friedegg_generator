@@ -1,5 +1,8 @@
 #!/usr/bin/env python
+import time
 import numpy as np
+from scipy.spatial import ConvexHull
+import ros_numpy
 import cv2
 
 import rospy
@@ -14,8 +17,8 @@ import message_filters
 
 tmp = {"msg1": None, "msg2": None}
 
-rospy.init_node("create_pan_mask_image")
-pub = rospy.Publisher("pan_mask_polygon", PolygonStamped, queue_size=1)
+rospy.init_node("create_pan_surface_polygon")
+pub = rospy.Publisher("pan_surface_polygon", PolygonStamped, queue_size=1)
 
 def convert_rect_to_polygon(rect, header):
     poly_msg = PolygonStamped()
@@ -30,21 +33,72 @@ def convert_rect_to_polygon(rect, header):
     poly_msg.polygon.points.append(pt3)
     return poly_msg
 
-def filter_by_label(msg_boxes, msg_class):
+def fileter_box_by_label(msg_boxes, msg_class):
     logicals = [label_name=="dish" for label_name in msg_class.label_names]
     indexes = np.where(logicals)[0].tolist()
     return [msg_boxes.boxes[i] for i in indexes]
 
-def filter_by_size(boxes, threshold=0.004):
+def find_bigest_box(boxes, threshold=0.004):
     # threshold = 0.2 * 0.2 * 0.1 by default
     get_size = lambda box: box.dimensions.x * box.dimensions.y * box.dimensions.z
     sizes = [get_size(box) for box in boxes]
-    indexes = np.where(sizes > threshold)[0].tolist()
-    return [boxes[i] for i in indexes]
+    return boxes[np.argmax(sizes)]
+
+def assert_orientation_condition(box):
+    quat_ = box.pose.orientation
+    quat = [quat_.x, quat_.y, quat_.z, quat_.w]
+    assert quat == [1., 0., 0., 0.]
+
+def filter_point_inside_box(pts, box):
+    assert_orientation_condition(box) # TODO currently only handle 1, 0, 0, 0 case
+    pos_ = box.pose.position
+    pos = np.array([pos_.x, pos_.y, pos_.z])
+    dim_ = box.dimensions
+    dim = np.array([dim_.x, dim_.y, dim_.z])
+    low = pos - dim * 0.5
+    hi = pos + dim * 0.5
+    indexes_inside = np.all(np.logical_and(low <= pts, pts <= hi), axis=1)
+    return pts[indexes_inside]
+
+def compute_pan_surface_polygon(pts):
+    z_array = pts[:, 2]
+    z_mean = np.mean(z_array)
+    z_std = np.std(z_array)
+    logicals = np.array([pt[2] > z_mean + z_std for pt in pts])
+    pts_filtered = pts[logicals]
+
+    hull = ConvexHull(pts_filtered[:, :2])
+    verts_ = hull.points[hull.vertices]
+    z_filtered_mean = np.mean(pts_filtered[:, 2])
+    verts = np.hstack([verts_, np.ones((len(verts_), 1))*z_filtered_mean])
+    return verts
+
+def polygon_size(verts):
+    s = 0.0
+    n = len(verts)
+    origin = verts[0]
+    for i in range(n):
+        v0 = verts[i] - origin
+        v1 = verts[(i+1)%n] - origin
+        s += np.linalg.norm(np.outer(v0, v1)) * 0.5 # green's theorem
+    return s
 
 def callback(msg_boxes, msg_class, msg_cloud):
-    boxes_filtered = filter_by_label(msg_boxes, msg_class)
-    boxes_filtered = filter_by_size(boxes_filtered)
+    boxes_filtered = fileter_box_by_label(msg_boxes, msg_class)
+    box = find_bigest_box(boxes_filtered)
+
+    pts = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(msg_cloud)
+    pts_filtered = filter_point_inside_box(pts, box)
+
+    msg_polygon = PolygonStamped(header=msg_cloud.header)
+    verts = compute_pan_surface_polygon(pts_filtered)
+    size = polygon_size(verts)
+    if size < 0.2 * 0.2:
+        return  # probably it's too small for a pan
+    for v in verts:
+        pt = Point32(x=v[0], y=v[1], z=v[2])
+        msg_polygon.polygon.points.append(pt)
+    pub.publish(msg_polygon)
 
 msg_boxes_name = "/segmentation_decomposer_ssd/boxes"
 msg_cloud_name = "/tf_transform_cloud/output"
