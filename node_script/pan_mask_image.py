@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+import numpy as np
+import cv2
+
+import rospy
+import cv_bridge
+from jsk_recognition_msgs.msg import ClassificationResult
+from jsk_recognition_msgs.msg import RectArray
+from sensor_msgs.msg import Image
+import message_filters
+
+tmp = {"img": None, "mask": None}
+
+rospy.init_node("create_pan_mask_image")
+pub = rospy.Publisher("pan_mask_image", Image, queue_size=1)
+
+def callback(msg_class, msg_rectarr, msg_image):
+    if len(msg_rectarr.rects)!=1:
+        # TODO use class or image to extract corresponding rect
+        return
+    rect = msg_rectarr.rects[0]
+
+    label_names = msg_class.label_names
+    bridge = cv_bridge.CvBridge()
+    img = bridge.imgmsg_to_cv2(msg_image, desired_encoding='bgr8')
+
+    mask = np.zeros(img.shape[:2], np.uint8)
+    mask[rect.y:rect.y + rect.height, rect.x:rect.x + rect.width] = 255
+
+    mask_msg = bridge.cv2_to_imgmsg(mask, encoding='mono8')
+    mask_msg.header = msg_image.header
+    pub.publish(mask_msg)
+
+    tmp["img"] = img
+    tmp["mask"] = mask
+
+msg_class_name = "/edgetpu_object_detector/output/class"
+msg_rectarr_name = "/edgetpu_object_detector/output/rects"
+msg_image_name ="/kinect_head/rgb/image_rect_color"
+msg_names = [msg_class_name, msg_rectarr_name, msg_image_name]
+type_names = [ClassificationResult, RectArray, Image]
+subs = [message_filters.Subscriber(name, T) for name, T in zip(msg_names, type_names)]
+ts = message_filters.ApproximateTimeSynchronizer(subs, 200, 0.2)
+ts.registerCallback(callback)
+rospy.spin()
