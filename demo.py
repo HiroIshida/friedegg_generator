@@ -102,7 +102,7 @@ class Demo(object):
             viewer.add(Axis.from_coords(self._target_grasp_pose))
             viewer.show()
 
-    def move_to_pan(self, slide=True, debug=True, angles=[90, 45, 90]):
+    def move_to_pan(self, slide=False, debug=False, angles=[90, 45, 90]):
         # DEBUG!!!!!
         self._pan_surface_center = np.array([0.7908201515525104, 0.23566020955566158, 0.9293659055940292])
 
@@ -114,16 +114,26 @@ class Demo(object):
         offset = np.array([0.0, 0.1, 0.1])
         position = self._pan_surface_center + offset
 
-        r = R.from_euler('xyz', angles, degrees=True)
-        x, y, z, w = r.as_quat() # TODO can be simpler by using as_matrix
-        orientation = np.array([w, x, y, z])
-        rotmat = skrobot.coordinates.math.rotation_matrix_from_quat(orientation)
-        prepare_pose = skrobot.coordinates.Coordinates(position, rotmat)
-
         if slide:
             translate_robot(self.robot_model, self.joint_list, [0.1, 0.5])
 
-        res = self.robot_model.inverse_kinematics(prepare_pose, link_list=self.link_list, move_target=self.rarm_end_coords, rotation_axis=True)
+        def solve_ik(angles):
+            r = R.from_euler('xyz', angles, degrees=True)
+            x, y, z, w = r.as_quat() # TODO can be simpler by using as_matrix
+            orientation = np.array([w, x, y, z])
+            rotmat = skrobot.coordinates.math.rotation_matrix_from_quat(orientation)
+            prepare_pose = skrobot.coordinates.Coordinates(position, rotmat)
+
+
+            res = self.robot_model.inverse_kinematics(prepare_pose, link_list=self.link_list, move_target=self.rarm_end_coords, rotation_axis=True)
+
+        for a in [60, 30, 0, -30, -60, -90]:
+            solve_ik([a, 45, 30])
+            self.ri.angle_vector(self.robot_model.angle_vector(), time=0.5, time_scale=1.0)
+            time.sleep(0.3)
+        solve_ik([-90, -10, 30])
+        self.ri.angle_vector(self.robot_model.angle_vector(), time=0.5, time_scale=1.0)
+        self.ri.wait_interpolation()
 
         if debug:
             viewer = skrobot.viewers.TrimeshSceneViewer(resolution=(640, 480))
@@ -140,7 +150,9 @@ except:
 demo.reset_robot()
 time.sleep(3)
 demo.grasp()
+demo.move_to_pan(slide=True)
 
+"""
 demo.move_to_pan(angles=[90, 45, 30], slide=True, debug=False)
 demo.ri.angle_vector(demo.robot_model.angle_vector(), time=2.5, time_scale=1.0)
 time.sleep(3)
@@ -153,3 +165,4 @@ for a in [60, 30, 0, -30, -60, -90]:
 demo.move_to_pan(angles=[-90, 0, 30], slide=False, debug=False)
 demo.ri.angle_vector(demo.robot_model.angle_vector(), time=2.5, time_scale=1.0)
 time.sleep(3)
+"""
