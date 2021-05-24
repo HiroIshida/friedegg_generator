@@ -46,7 +46,7 @@
       align_boxes_with_plane: false
       approximate_sync: true  
       target_frame_id: base_footprint
-      queue_size: 100000
+      queue_size: 20
       publish_clouds: false
       sort_by: -cloud_size 
       use_pca: false
