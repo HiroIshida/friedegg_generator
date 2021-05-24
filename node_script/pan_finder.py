@@ -105,7 +105,7 @@ def callback(msg_boxes, msg_class, msg_cloud):
     size, com = polygon_size_and_com(verts) # TODO check size is starnage!
     rospy.loginfo("computed pan size is {0}".format(size))
     rospy.loginfo("computed pan com is {0}".format(com.tolist()))
-    if size < 0.2 * 0.2: 
+    if size < 0.3: # TODO adhoc parameter. we should fix size computation
         rospy.loginfo("publish canceled as it's too small")
         return  
     for v in verts:
