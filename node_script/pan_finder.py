@@ -92,9 +92,13 @@ def callback(msg_boxes, msg_class, msg_cloud):
     if len(msg_boxes.boxes) != len(msg_class.label_names):
         # NOTE workaround
         # TODO maybe this occurs due to sync error??
+        rospy.loginfo("numbers of box and labels does not match (maybe async error)")
         return
 
     boxes_filtered = fileter_box_by_label(msg_boxes, msg_class)
+    if len(boxes_filtered)==0:
+        rospy.loginfo("No dish found")
+        return
     box = find_bigest_box(boxes_filtered)
 
     pts = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(msg_cloud)
