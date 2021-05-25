@@ -1,4 +1,5 @@
 <launch>
+  <arg name="input_cloud" default="/kinect_head/depth_registered/points" />
   <arg name="rosbag" default="false" />
   <arg name="rviz" default="true" />
   <arg name="adhoc_tf_enable" default="true" />
@@ -8,7 +9,7 @@
   <node name="tf_transform_cloud"
           pkg="nodelet" type="nodelet"
           args="standalone jsk_pcl_utils/TfTransformCloud" if="$(arg adhoc_tf_enable)">
-          <remap from="~input" to="/kinect_head/depth_registered/half/points"/>
+          <remap from="~input" to="$(arg input_cloud)"/>
       <rosparam>
         target_frame_id: base_footprint
       </rosparam>
