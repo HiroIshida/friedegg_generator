@@ -3,6 +3,7 @@ import copy
 import numpy as np
 import rospy
 import skrobot
+import math
 from skrobot.model.primitives import Axis
 from skrobot.planner.utils import set_robot_config, get_robot_config
 from scipy.spatial.transform import Rotation as R
@@ -80,13 +81,21 @@ class Demo(object):
         self.robot_model.reset_manip_pose()
         self.robot_model.r_shoulder_lift_joint.joint_angle(-0.5)
         self.robot_model.l_shoulder_lift_joint.joint_angle(-0.5)
-        self.robot_model.torso_lift_joint.joint_angle(0.25)
+        self.robot_model.torso_lift_joint.joint_angle(0.35)
         self.robot_model.head_tilt_joint.joint_angle(0.9)
         self.ri.angle_vector(self.robot_model.angle_vector(), time=2.5, time_scale=1.0)
 
+    def set_rarm(self, angles):
+        assert len(angles) == 7
+        joint_names = ["r_shoulder_pan_joint", "r_shoulder_lift_joint", "r_upper_arm_roll_joint", "r_elbow_flex_joint", "r_forearm_roll_joint", "r_wrist_flex_joint", "r_wrist_roll_joint"]
+        for (jn, an) in zip(joint_names, angles):
+            joint = self.robot_model.__dict__[jn]
+            joint.joint_angle(an)
+
     def grasp(self, debug=False):
         self.ri.move_gripper("rarm", pos=0.04)
-
+        angles = np.array([-28.31, -5.975, -111.2, -56.61, -53.92, -63.41, -172.148]) * math.pi/180.0
+        self.set_rarm(angles)
         res = self.robot_model.inverse_kinematics(self._target_pose, link_list=self.link_list, move_target=self.rarm_end_coords, rotation_axis=True)
         self.ri.angle_vector(self.robot_model.angle_vector(), time=2.5, time_scale=1.0)
         self.ri.wait_interpolation()
@@ -102,7 +111,7 @@ class Demo(object):
             viewer.add(Axis.from_coords(self._target_grasp_pose))
             viewer.show()
 
-    def move_to_pan(self, slide=False, debug=False, angles=[90, 45, 90]):
+    def move_to_pan(self, use_real_robot=False, debug=False, angles=[90, 45, 90]):
         # DEBUG!!!!!
         self._pan_surface_center = np.array([0.7908201515525104, 0.23566020955566158, 0.9293659055940292])
 
@@ -114,7 +123,10 @@ class Demo(object):
         offset = np.array([0.0, 0.1, 0.1])
         position = self._pan_surface_center + offset
 
-        if slide:
+        if use_real_robot:
+            #demo.ri.go_pos_unsafe_no_wait(*[0.0, 0.5, 0.0])
+            pass
+        else:
             translate_robot(self.robot_model, self.joint_list, [0.1, 0.5])
 
         def solve_ik(angles):
@@ -129,11 +141,15 @@ class Demo(object):
 
         for a in [60, 30, 0, -30, -60, -90]:
             solve_ik([a, 45, 30])
-            self.ri.angle_vector(self.robot_model.angle_vector(), time=0.5, time_scale=1.0)
-            time.sleep(0.3)
+
+            if use_real_robot:
+                self.ri.angle_vector(self.robot_model.angle_vector(), time=0.5, time_scale=1.0)
+                time.sleep(0.3)
+
         solve_ik([-90, -10, 30])
-        self.ri.angle_vector(self.robot_model.angle_vector(), time=0.5, time_scale=1.0)
-        self.ri.wait_interpolation()
+        if use_real_robot:
+            self.ri.angle_vector(self.robot_model.angle_vector(), time=0.5, time_scale=1.0)
+            self.ri.wait_interpolation()
 
         if debug:
             viewer = skrobot.viewers.TrimeshSceneViewer(resolution=(640, 480))
@@ -148,9 +164,8 @@ except:
     demo = Demo()
 
 demo.reset_robot()
-time.sleep(3)
-demo.grasp()
-demo.move_to_pan(slide=True)
+#demo.grasp()
+#demo.move_to_pan(use_real_robot=True)
 
 """
 demo.move_to_pan(angles=[90, 45, 30], slide=True, debug=False)
