@@ -1,7 +1,7 @@
 <launch>
   <arg name="rviz" default="true"/> 
   <arg name="rosbag" default="false" />
-  <arg name="compressed" default="false" />
+  <arg name="compressed" default="true" />
   <arg name="input_cloud" default="/kinect_head/depth_registered/points" unless="$(arg compressed)"/>
 
 

@@ -7,7 +7,7 @@ import cv2
 
 import rospy
 import cv_bridge
-from geometry_msgs.msg import PolygonStamped, Point32, PointStamped
+from geometry_msgs.msg import PolygonStamped, Point32, PoseStamped
 from sensor_msgs.msg import PointCloud2
 from jsk_recognition_msgs.msg import ClassificationResult
 from jsk_recognition_msgs.msg import RectArray
@@ -19,7 +19,7 @@ tmp = {"msg1": None, "msg2": None}
 
 rospy.init_node("create_pan_surface_polygon")
 pub = rospy.Publisher("pan_surface_polygon", PolygonStamped, queue_size=1)
-pub_center = rospy.Publisher("pan_surface_center", PointStamped, queue_size=1)
+pub_center = rospy.Publisher("pan_surface_center", PoseStamped, queue_size=1)
 
 def convert_rect_to_polygon(rect, header):
     poly_msg = PolygonStamped()
@@ -117,11 +117,13 @@ def callback(msg_boxes, msg_class, msg_cloud):
         msg_polygon.polygon.points.append(pt)
     pub.publish(msg_polygon)
 
-    msg_point = PointStamped(header=msg_cloud.header)
-    msg_point.point.x = com[0]
-    msg_point.point.y = com[1]
-    msg_point.point.z = com[2]
-    pub_center.publish(msg_point)
+    msg_pose = PoseStamped(header=msg_cloud.header)
+    msg_pose.pose.orientation.w = 1.0
+    point = msg_pose.pose.position
+    point.x = com[0]
+    point.y = com[1]
+    point.z = com[2]
+    pub_center.publish(msg_pose)
 
 msg_boxes_name = "/segmentation_decomposer_ssd/boxes"
 msg_cloud_name = "/tf_transform_cloud/output"

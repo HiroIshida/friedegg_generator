@@ -10,8 +10,8 @@ Panels:
         - /Image1
         - /Polygon1
         - /BoundingBoxArray1
-        - /PointStamped1
         - /Pose1
+        - /Pose2
       Splitter Ratio: 0.5
     Tree Height: 425
   - Class: rviz/Selection
@@ -121,6 +121,7 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         fl_caster_l_wheel_link:
           Alpha: 1
           Show Axes: false
@@ -151,6 +152,42 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        head_chain_cb_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        head_mount_kinect_ir_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        head_mount_kinect_ir_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        head_mount_kinect_rgb_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        head_mount_kinect_rgb_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        head_mount_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        head_mount_prosilica_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        head_mount_prosilica_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         head_pan_link:
           Alpha: 1
           Show Axes: false
@@ -294,6 +331,10 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        left_arm_chain_cb_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         narrow_stereo_l_stereo_camera_frame:
           Alpha: 1
           Show Axes: false
@@ -433,10 +474,15 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        right_arm_chain_cb_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         sensor_mount_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         torso_lift_link:
           Alpha: 1
           Show Axes: false
@@ -539,16 +585,6 @@ Visualization Manager:
       only edge: false
       show coords: false
     - Alpha: 1
-      Class: rviz/PointStamped
-      Color: 204; 0; 0
-      Enabled: true
-      History Length: 1
-      Name: PointStamped
-      Radius: 0.05000000074505806
-      Topic: /pan_surface_center
-      Unreliable: false
-      Value: true
-    - Alpha: 1
       Axes Length: 0.10000000149011612
       Axes Radius: 0.029999999329447746
       Class: rviz/Pose
@@ -561,6 +597,21 @@ Visualization Manager:
       Shaft Radius: 0.05000000074505806
       Shape: Axes
       Topic: /grasp_pose
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Axes Length: 0.20000000298023224
+      Axes Radius: 0.05000000074505806
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Axes
+      Topic: /pan_surface_center
       Unreliable: false
       Value: true
   Enabled: true
@@ -591,7 +642,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.234049081802368
+      Distance: 2.641824245452881
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -606,10 +657,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.879796028137207
+      Pitch: 1.1247960329055786
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.9317522048950195
+      Yaw: 0.37356680631637573
     Saved: ~
 Window Geometry:
   Displays:
