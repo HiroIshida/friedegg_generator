@@ -18,14 +18,14 @@ class DataManager(object):
 
         if arm == "rarm":
             self.arm_joint_names = [("r" + e) for e in tmp]
-            self.tool_frame = '/r_gripper_tool_frame'
+            self.tool_frame = 'r_gripper_tool_frame'
         else:
             self.arm_joint_names = [("l" + e) for e in tmp]
-            self.tool_frame = '/l_gripper_tool_frame'
+            self.tool_frame = 'l_gripper_tool_frame'
         self.arm_joint_names.append("torso_lift_joint")
 
         # initialize data to be dumped
-        self.data = {"joint_names" : self.arm_joint_names}
+        self.data = {"joint_names" : self.arm_joint_names, "end_effector": self.tool_frame}
         self.data["angles_seq"] = []
         self.data["pose_seq"] = []
 
@@ -41,9 +41,7 @@ class DataManager(object):
         while True:
             try:
                 tf_relative = self.listener.lookupTransform(self.object_frame, self.tool_frame, rospy.Time(0))
-                pos = list(tf_relative[0])
-                rot = list(tf_relative[1])
-                return pos + rot
+                return tf_relative
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 continue
 
