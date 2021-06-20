@@ -5,6 +5,25 @@ import skrobot
 import tf
 import rospy
 
+def qv_mult(q1, v1_):
+    length = np.linalg.norm(v1_)
+    v1 = v1_/length
+    v1 = tf.transformations.unit_vector(v1)
+    q2 = list(v1)
+    q2.append(0.0)
+    v_converted = tf.transformations.quaternion_multiply(
+        tf.transformations.quaternion_multiply(q1, q2), 
+        tf.transformations.quaternion_conjugate(q1))[:3]
+    return v_converted * length
+
+def convert(tf_12, tf_23):
+    tran_12, rot_12 = [np.array(e) for e in tf_12]
+    tran_23, rot_23 = [np.array(e) for e in tf_23]
+    rot_13 = tf.transformations.quaternion_multiply(rot_12, rot_23)
+    tran_13 = tran_23 + qv_mult(rot_23, tran_12)
+    return list(tran_13), list(rot_13)
+
+
 class DataManager(object):
     def __init__(self, arm, object_frame):
         robot_model = skrobot.models.PR2()
@@ -29,6 +48,8 @@ class DataManager(object):
         self.data["angles_seq"] = []
         self.data["pose_seq"] = []
 
+        self.T_base_to_target = None
+
     def _reflect_current_state(self):
         self.robot_model.angle_vector(self.ri.angle_vector())
 
@@ -36,12 +57,20 @@ class DataManager(object):
         self._reflect_current_state()
         return np.array([self.robot_model.__dict__[jn].joint_angle() for jn in self.arm_joint_names]).tolist()
 
-    def get_relative_pose(self):
+    def get_target_pose(self):
         # get relative pose of the arm from the focusing objective
         while True:
             try:
-                tf_relative = self.listener.lookupTransform(self.object_frame, self.tool_frame, rospy.Time(0))
-                return tf_relative
+                T_base_to_target = self.listener.lookupTransform(self.object_frame, "base_link", rospy.Time(0))
+                return T_base_to_target
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                continue
+
+    def get_relative_pose(self):
+        while True:
+            try:
+                T_gripper_to_base = self.listener.lookupTransform("base_link", self.tool_frame, rospy.Time(0))
+                return convert(T_gripper_to_base, self.T_base_to_target)
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 continue
 
@@ -52,6 +81,8 @@ class DataManager(object):
         self.data["pose_seq"].append(rel_pose)
 
     def record(self):
+        self.T_base_to_target = self.get_target_pose()
+
         print("start recording. Please hit \"q\" if want to terminate.")
         while True:
             string = raw_input()
@@ -66,6 +97,7 @@ class DataManager(object):
             json.dump(self.data, f, indent=2)
 
 if __name__ == '__main__':
-    dm = DataManager("rarm", "base_link")
+    #dm = DataManager("rarm", "base_link")
+    dm = DataManager("rarm", "/pan_surface_center")
     dm.record()
     dm.dump()
