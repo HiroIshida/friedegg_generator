@@ -7,8 +7,9 @@
   <arg name="throttle_prefix" default="throttled/" if="$(arg use_throttle)"/>
   <arg name="throttle_prefix" default=""       unless="$(arg use_throttle)"/>
 
-  <arg name="input_image" default="/$(arg camera)/rgb/$(arg throttle_prefix)image_rect_color"/>
-  <arg name="input_camera_info" default="/$(arg camera)/rgb/$(arg throttle_prefix)camera_info"/>
+  <!--arg name="input_image" default="/$(arg camera)/rgb/$(arg throttle_prefix)image_rect_color"/-->
+  <arg name="input_image" default="/narrow_stereo/right/image_color"/>
+  <arg name="input_camera_info" default="/narrow_stereo/left/camera_info"/>
 
   <group if="$(arg use_mask)">
     <node pkg="jsk_pcl_ros" type="attention_clipper" name="attention_clipper"
@@ -29,7 +30,7 @@
     </node>
   </group>
 
-  <group ns="/$(arg camera)/rgb">
+  <group ns="/kitchin_finder">
     <node name="kitchen_demo_sift" pkg="imagesift" type="imagesift"
           launch-prefix="nice -n +10" output="screen">
       <remap from="image" to="$(arg input_image)" />
@@ -43,22 +44,10 @@
         window_name: fridge_handle_upper
         object_width: 0.23
         object_height: 0.145
-        relative_pose: '0.22 0.05 0.075  0.707107 0 -0.707107 0'
+        relative_pose: '0.04 0.28 0.0  0.707107 0 -0.707107 0'
         viewer_window: false
       </rosparam>
     </node>
-    <!--
-    <node name="fridge_detector" pkg="jsk_perception" type="point_pose_extractor">
-      <rosparam subst_value="true">
-        template_filename: $(find friedegg_generator)/sift/kitchen.jpg
-        window_name: fridge_handle_upper
-        object_width: 0.60
-        object_height: 0.68
-        relative_pose: '0.22 0.05 0.075  0.707107 0 -0.707107 0'
-        viewer_window: false
-      </rosparam>
-    </node>
-    -->
   </group>
 </launch>
 
