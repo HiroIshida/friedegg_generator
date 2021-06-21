@@ -98,10 +98,11 @@ class DataManager(object):
 
     def record(self):
         while True:
-            time.sleep(0.1)
+            time.sleep(1.0)
             if self.T_base_to_target:
                 print(self.T_base_to_target)
                 break
+            print("waiting pose msg...")
 
         print("start recording. Please hit \"q\" if want to terminate.")
         while True:
