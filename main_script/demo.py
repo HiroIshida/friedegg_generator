@@ -64,7 +64,7 @@ class Demo(object):
         tmp = skrobot.coordinates.Coordinates(position, rotmat)
 
         target_grasp_pose = copy.deepcopy(tmp)
-        target_grasp_pose.translate([0.02, 0, 0])
+        target_grasp_pose.translate([0.01, 0, 0])
         self._target_grasp_pose = target_grasp_pose
 
         target_pose = copy.deepcopy(tmp)
@@ -73,7 +73,7 @@ class Demo(object):
 
     def _callback_pan_center(self, msg):
         pose = msg.pose 
-        pos = [pose.position.x, pose.position.y, pose.position.z]
+        pos = [pose.position.x, pose.position.y, pose.position.z + 0.1]
         ori = [pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]
         self._pan_surface_center = [pos, ori]
 
@@ -88,6 +88,7 @@ class Demo(object):
         self.robot_model.torso_lift_joint.joint_angle(0.35)
         self.robot_model.head_tilt_joint.joint_angle(0.9)
         self.ri.angle_vector(self.robot_model.angle_vector(), time=2.5, time_scale=1.0)
+        self.ri.move_gripper("rarm", pos=0.07)
 
     def set_rarm(self, angles):
         assert len(angles) == 7
@@ -97,7 +98,7 @@ class Demo(object):
             joint.joint_angle(an)
 
     def grasp(self, debug=False):
-        self.ri.move_gripper("rarm", pos=0.04)
+        self.ri.move_gripper("rarm", pos=0.07)
         angles = np.array([-28.31, -5.975, -111.2, -56.61, -53.92, -63.41, -172.148]) * math.pi/180.0
         self.set_rarm(angles)
         res = self.robot_model.inverse_kinematics(self._target_pose, link_list=self.link_list, move_target=self.rarm_end_coords, rotation_axis=True)
@@ -121,12 +122,17 @@ class Demo(object):
     def place_egg_on_pan(self):
         assert self._pan_surface_center is not None
         repro = Reproducer(self.robot_model, "../aux_script/trajectory.json", use_torso=False)
-        angles_list, joint_names = repro(T_target_to_base)
+        angles_list, joint_names = repro(self._pan_surface_center)
 
+        counter = 0
         for angles in angles_list:
             for jn, a in zip(joint_names, angles):
                 self.robot_model.__dict__[jn].joint_angle(a)
-            self.ri.angle_vector(self.robot_model.angle_vector(), time=1.0, time_scale=1.0)
+            dur = 3.0 if counter==0 else 1.0
+            self.ri.angle_vector(self.robot_model.angle_vector(),
+                    time=dur, time_scale=1.0)
+            self.ri.wait_interpolation()
+            counter += 1
 
 try:
     demo
@@ -134,7 +140,7 @@ except:
     rospy.init_node("demo")
     demo = Demo()
 
-demo.reset_robot()
+#demo.reset_robot()
 #demo.grasp()
 #demo.move_to_pan(use_real_robot=True)
 
