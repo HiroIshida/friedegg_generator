@@ -21,6 +21,9 @@
     <arg name="rviz" value="false"/>
   </include>
 
+  <include file="$(find friedegg_generator)/launch/find_kitchen.launch">
+  </include>
+
   <node type="rviz" name="rviz" pkg="rviz" args="-d $(find friedegg_generator)/config/demo.rviz" if="$(arg rviz)"/>
 
 </launch>

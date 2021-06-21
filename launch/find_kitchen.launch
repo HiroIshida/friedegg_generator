@@ -30,7 +30,7 @@
     </node>
   </group>
 
-  <group ns="/kitchin_finder">
+  <group ns="/kitchen_finder">
     <node name="kitchen_demo_sift" pkg="imagesift" type="imagesift"
           launch-prefix="nice -n +10" output="screen">
       <remap from="image" to="$(arg input_image)" />
@@ -49,5 +49,7 @@
       </rosparam>
     </node>
   </group>
+  <node name="dummy" pkg="friedegg_generator" type="dummy_sub_object_detection.py"/>
+
 </launch>
 
