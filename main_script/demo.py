@@ -125,6 +125,7 @@ class Demo(object):
         self.robot_model.head_tilt_joint.joint_angle(0.9)
         self.ri.angle_vector(self.robot_model.angle_vector(), time=2.5, time_scale=1.0)
         self.ri.move_gripper("rarm", pos=0.07)
+        self.ri.move_gripper("larm", pos=0.0)
 
     def set_rarm(self, angles):
         assert len(angles) == 7
@@ -177,18 +178,21 @@ class Demo(object):
             self.ri.wait_interpolation()
             counter += 1
 
-    def push_switch(self, debug=False):
+    def turnon_oven(self, debug=False):
+        self.reset_robot(0.0) # to be able to see the switch well
+        time.sleep(3.0)
+
         assert self._switch_coords is not None
 
         target_coords = copy.deepcopy(self._switch_coords)
 
-        def solve_ik_and_send():
+        def solve_ik_and_send(dur=2.0):
             res = self.robot_model.inverse_kinematics(
                     target_coords,
                     link_list=self.larm_link_list, 
                     move_target=self.larm_end_coords, 
                     rotation_axis=True)
-            self.ri.angle_vector(self.robot_model.angle_vector(), time=2.0, time_scale=1.0)
+            self.ri.angle_vector(self.robot_model.angle_vector(), time=dur, time_scale=1.0)
             self.ri.wait_interpolation()
             assert res is not None
 
@@ -208,11 +212,30 @@ class Demo(object):
 
         # push motion
         target_coords.translate([0.03, 0, 0])
-        solve_ik_and_send()
+        solve_ik_and_send(1.0)
 
         # pull motion
         target_coords.translate([-0.09, 0, 0])
+        solve_ik_and_send(1.0)
+
+
+        # grasp motion
+        self.ri.move_gripper("larm", pos=0.07)
+        target_coords.translate([0.08, 0, 0])
         solve_ik_and_send()
+        self.ri.move_gripper("larm", pos=0.01)
+
+        # rotate motion
+        rot_joint = self.robot_model.l_wrist_roll_joint
+        rot_joint.joint_angle(rot_joint.joint_angle() + math.pi * 0.5)
+        self.ri.angle_vector(self.robot_model.angle_vector(), time=2.0, time_scale=1.0)
+        self.ri.wait_interpolation()
+
+        # come-back motion
+        self.ri.move_gripper("larm", pos=0.05)
+        target_coords.translate([-0.06, 0, 0])
+        solve_ik_and_send(1.0)
+        self.ri.move_gripper("larm", pos=0.0)
 
 try:
     demo
@@ -220,7 +243,8 @@ except:
     rospy.init_node("demo")
     demo = Demo()
 
-demo.reset_robot(0.05)
+
+#demo.ri.move_gripper("larm", pos=0.02)
 #demo.grasp()
 #demo.move_to_pan(use_real_robot=True)
 
