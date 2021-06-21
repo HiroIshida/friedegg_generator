@@ -26,10 +26,18 @@ def convert(tf_12, tf_23):
     return list(tran_13), list(rot_13)
 
 class Reproducer(object):
-    def __init__(self, robot_model, filename):
+
+    class IKFailException(Exception):
+        pass
+
+    def __init__(self, robot_model, filename, use_torso=False):
         self.robot_model = copy.deepcopy(robot_model) # ref is ok?
         with open(filename, mode='r') as f:
             self.data = json.load(f)
+
+        if not use_torso:
+            self.data["joint_names"] = list(set(self.data["joint_names"]) - set(["torso_lift_joint"]))
+
         self.move_joints = [self.robot_model.__dict__[jn] for jn in self.data["joint_names"]]
         self.move_links = [j.child_link for j in self.move_joints]
 
@@ -53,7 +61,9 @@ class Reproducer(object):
                     link_list=self.move_links,
                     move_target=move_target,
                     rotation_axis=True)
-            assert (is_success is not False)
+            if is_success is False:
+                raise self.IKFailException()
+            print("solved")
             angles_list.append([j.joint_angle() for j in self.move_joints])
         return angles_list, self.data["joint_names"]
 
@@ -67,7 +77,7 @@ if __name__ == '__main__':
         viewer.show()
     repro = Reproducer(robot_model, "../aux_script/trajectory.json")
 
-    T_target_to_base = [[0.0, 0, 0.0], [0, 0, 0, 1.]]
+    T_target_to_base = [[0.3, 0.0, 0.7], [0, 0, 0, 1.]]
     angles_list, joint_names = repro(T_target_to_base)
     joints = [robot_model.__dict__[jn] for jn in joint_names]
 
