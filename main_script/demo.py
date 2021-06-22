@@ -83,7 +83,7 @@ class Demo(object):
         tmp = skrobot.coordinates.Coordinates(position, rotmat)
 
         target_grasp_pose = copy.deepcopy(tmp)
-        target_grasp_pose.translate([0.02, 0, 0])
+        target_grasp_pose.translate([0.03, 0, 0])
         self._target_grasp_pose = target_grasp_pose
 
         target_pose = copy.deepcopy(tmp)
@@ -123,7 +123,7 @@ class Demo(object):
         self.robot_model.r_shoulder_lift_joint.joint_angle(-0.5)
         self.robot_model.l_shoulder_lift_joint.joint_angle(-0.5)
         self.robot_model.torso_lift_joint.joint_angle(torso_angle)
-        self.robot_model.head_tilt_joint.joint_angle(1.0)
+        self.robot_model.head_tilt_joint.joint_angle(0.9)
         self.ri.angle_vector(self.robot_model.angle_vector(), time=2.5, time_scale=1.0)
         self.ri.move_gripper("rarm", pos=0.07)
         self.ri.move_gripper("larm", pos=0.0)
@@ -167,7 +167,19 @@ class Demo(object):
     def place_egg_on_pan(self):
         assert self._pan_surface_center is not None
         repro = Reproducer(self.robot_model, "../aux_script/trajectory.json", use_torso=False)
-        angles_list, joint_names = repro(self._pan_surface_center)
+        try_count = 0
+        while True:
+            try:
+                angles_list, joint_names = repro(self._pan_surface_center)
+                break
+            except:
+                try_count += 1
+                time.sleep(0.5)
+                print(try_count)
+                if try_count == 30:
+                    raise Exception
+                print("failure. try again")
+
 
         joints = [self.robot_model.__dict__[jn] for jn in joint_names]
         angles_now = [j.joint_angle() for j in joints]
@@ -185,13 +197,13 @@ class Demo(object):
         for angles in angles_list:
             for jn, a in zip(joint_names, angles):
                 self.robot_model.__dict__[jn].joint_angle(a)
-            dur = 3.0 if counter==0 else 1.0
+            dur = 1.0
             self.ri.angle_vector(self.robot_model.angle_vector(),
                     time=dur, time_scale=1.0)
             self.ri.wait_interpolation()
-            counter += 1
 
-
+        # open!
+        self.ri.move_gripper("rarm", pos=0.07)
 
     def turnon_oven(self, debug=False):
         self.reset_robot(0.0) # to be able to see the switch well
@@ -211,7 +223,7 @@ class Demo(object):
             assert res is not None
 
 
-        target_coords.translate([-0.1, 0, 0])
+        target_coords.translate([-0.07, 0.02, -0.02]) # -0.01 for carib error
         if debug:
             ax = Axis(axis_radius=0.01, axis_length=0.1, 
                     pos=target_coords.translation, rot=target_coords.rotation)
@@ -225,7 +237,7 @@ class Demo(object):
         solve_ik_and_send()
 
         # push motion
-        target_coords.translate([0.03, 0, 0])
+        target_coords.translate([0.03, 0, 0.0]) 
         solve_ik_and_send(1.0)
 
         # pull motion
@@ -234,7 +246,7 @@ class Demo(object):
 
         # grasp motion
         self.ri.move_gripper("larm", pos=0.07)
-        target_coords.translate([0.08, 0, 0])
+        target_coords.translate([0.09, 0, 0])
         solve_ik_and_send()
         self.ri.move_gripper("larm", pos=0.01)
 
@@ -259,7 +271,7 @@ except:
 #demo.reset_robot()
 #demo.grasp()
 #demo.place_egg_on_pan()
-#demo.ri.go_pos_unsafe(-0.3, 0, 0)
+#demo.ri.go_pos_unsafe(-0.4, 0, 0)
 #demo.turnon_oven()
 
 
