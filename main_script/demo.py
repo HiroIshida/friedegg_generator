@@ -83,7 +83,7 @@ class Demo(object):
         tmp = skrobot.coordinates.Coordinates(position, rotmat)
 
         target_grasp_pose = copy.deepcopy(tmp)
-        target_grasp_pose.translate([0.01, 0, 0])
+        target_grasp_pose.translate([0.02, 0, 0])
         self._target_grasp_pose = target_grasp_pose
 
         target_pose = copy.deepcopy(tmp)
@@ -109,6 +109,7 @@ class Demo(object):
 
         # convert to skrobot coords
         pos, rot = T_switch_to_base
+        pos[2] = 0.74 # Because we know the height of the switch hahaha
         rotmat = skrobot.coordinates.math.rotation_matrix_from_quat(xyzw2wxyz(rot))
         coords = skrobot.coordinates.Coordinates(pos, rotmat)
         self._switch_coords = coords
@@ -122,7 +123,7 @@ class Demo(object):
         self.robot_model.r_shoulder_lift_joint.joint_angle(-0.5)
         self.robot_model.l_shoulder_lift_joint.joint_angle(-0.5)
         self.robot_model.torso_lift_joint.joint_angle(torso_angle)
-        self.robot_model.head_tilt_joint.joint_angle(0.9)
+        self.robot_model.head_tilt_joint.joint_angle(1.0)
         self.ri.angle_vector(self.robot_model.angle_vector(), time=2.5, time_scale=1.0)
         self.ri.move_gripper("rarm", pos=0.07)
         self.ri.move_gripper("larm", pos=0.0)
@@ -155,7 +156,7 @@ class Demo(object):
         assert res is not False
         self.ri.angle_vector(self.robot_model.angle_vector(), time=1.0, time_scale=1.0)
         self.ri.wait_interpolation()
-        self.ri.move_gripper("rarm", pos=0.0)
+        self.ri.move_gripper("rarm", pos=0.0, effort=1000)
 
         if debug:
             viewer = skrobot.viewers.TrimeshSceneViewer(resolution=(640, 480))
@@ -168,7 +169,19 @@ class Demo(object):
         repro = Reproducer(self.robot_model, "../aux_script/trajectory.json", use_torso=False)
         angles_list, joint_names = repro(self._pan_surface_center)
 
-        counter = 0
+        joints = [self.robot_model.__dict__[jn] for jn in joint_names]
+        angles_now = [j.joint_angle() for j in joints]
+        angles_list.insert(0, angles_now)
+
+        for angles in angles_list:
+            for jn, a in zip(joint_names, angles):
+                self.robot_model.__dict__[jn].joint_angle(a)
+            dur = 1.0
+            self.ri.angle_vector(self.robot_model.angle_vector(),
+                    time=dur, time_scale=1.0)
+            self.ri.wait_interpolation()
+
+        angles_list.reverse()
         for angles in angles_list:
             for jn, a in zip(joint_names, angles):
                 self.robot_model.__dict__[jn].joint_angle(a)
@@ -178,9 +191,10 @@ class Demo(object):
             self.ri.wait_interpolation()
             counter += 1
 
+
+
     def turnon_oven(self, debug=False):
         self.reset_robot(0.0) # to be able to see the switch well
-        time.sleep(3.0)
 
         assert self._switch_coords is not None
 
@@ -218,7 +232,6 @@ class Demo(object):
         target_coords.translate([-0.09, 0, 0])
         solve_ik_and_send(1.0)
 
-
         # grasp motion
         self.ri.move_gripper("larm", pos=0.07)
         target_coords.translate([0.08, 0, 0])
@@ -243,23 +256,16 @@ except:
     rospy.init_node("demo")
     demo = Demo()
 
+#demo.reset_robot()
+#demo.grasp()
+#demo.place_egg_on_pan()
+#demo.ri.go_pos_unsafe(-0.3, 0, 0)
+#demo.turnon_oven()
+
 
 #demo.ri.move_gripper("larm", pos=0.02)
 #demo.grasp()
 #demo.move_to_pan(use_real_robot=True)
 
+#vec_go_pos = np.array([0.12, 0.08])*1.0
 
-"""
-demo.move_to_pan(angles=[90, 45, 30], slide=True, debug=False)
-demo.ri.angle_vector(demo.robot_model.angle_vector(), time=2.5, time_scale=1.0)
-time.sleep(3)
-
-for a in [60, 30, 0, -30, -60, -90]:
-    demo.move_to_pan(angles=[a, 45, 30], slide=False, debug=False)
-    demo.ri.angle_vector(demo.robot_model.angle_vector(), time=0.5, time_scale=1.0)
-    time.sleep(0.3)
-
-demo.move_to_pan(angles=[-90, 0, 30], slide=False, debug=False)
-demo.ri.angle_vector(demo.robot_model.angle_vector(), time=2.5, time_scale=1.0)
-time.sleep(3)
-"""
