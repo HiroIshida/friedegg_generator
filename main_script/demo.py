@@ -123,10 +123,13 @@ class Demo(object):
         self.robot_model.r_shoulder_lift_joint.joint_angle(-0.5)
         self.robot_model.l_shoulder_lift_joint.joint_angle(-0.5)
         self.robot_model.torso_lift_joint.joint_angle(torso_angle)
-        self.robot_model.head_tilt_joint.joint_angle(0.9)
+        #self.robot_model.head_tilt_joint.joint_angle(0.9)
+        self.robot_model.head_tilt_joint.joint_angle(42.396 * math.pi/180.0)
+        self.robot_model.head_pan_joint.joint_angle(6.6787 * math.pi/180.0)
         self.ri.angle_vector(self.robot_model.angle_vector(), time=2.5, time_scale=1.0)
         self.ri.move_gripper("rarm", pos=0.07)
         self.ri.move_gripper("larm", pos=0.0)
+        #6.6487 42.396
 
     def set_rarm(self, angles):
         assert len(angles) == 7
@@ -223,7 +226,7 @@ class Demo(object):
             assert res is not None
 
 
-        target_coords.translate([-0.07, 0.02, -0.02]) # -0.01 for carib error
+        target_coords.translate([-0.05, 0.02, -0.02]) # -0.01 for carib error
         if debug:
             ax = Axis(axis_radius=0.01, axis_length=0.1, 
                     pos=target_coords.translation, rot=target_coords.rotation)
@@ -237,7 +240,7 @@ class Demo(object):
         solve_ik_and_send()
 
         # push motion
-        target_coords.translate([0.03, 0, 0.0]) 
+        target_coords.translate([0.045, 0, 0.0]) 
         solve_ik_and_send(1.0)
 
         # pull motion
@@ -246,7 +249,7 @@ class Demo(object):
 
         # grasp motion
         self.ri.move_gripper("larm", pos=0.07)
-        target_coords.translate([0.09, 0, 0])
+        target_coords.translate([0.08, 0, 0])
         solve_ik_and_send()
         self.ri.move_gripper("larm", pos=0.01)
 
@@ -262,6 +265,18 @@ class Demo(object):
         solve_ik_and_send(1.0)
         self.ri.move_gripper("larm", pos=0.0)
 
+        # SUPER AD-HOC
+        self._target_coords = target_coords
+        self._lambda = solve_ik_and_send
+
+    def turnoff_oven(self):
+        target_coords = self._target_coords
+        target_coords.translate([0.08, 0, 0.0]) 
+        self._lambda(1.0)
+
+        target_coords.translate([-0.08, 0, 0.0]) 
+        self._lambda(1.0)
+
 try:
     demo
 except:
@@ -272,12 +287,5 @@ except:
 #demo.grasp()
 #demo.place_egg_on_pan()
 #demo.ri.go_pos_unsafe(-0.4, 0, 0)
+#demo.reset_robot(0.0)
 #demo.turnon_oven()
-
-
-#demo.ri.move_gripper("larm", pos=0.02)
-#demo.grasp()
-#demo.move_to_pan(use_real_robot=True)
-
-#vec_go_pos = np.array([0.12, 0.08])*1.0
-
